@@ -53,7 +53,7 @@ int main(int argc, char* argv[])
 result is 30
 ```
 
-Have fun！
+就是这样简单。玩得愉快~
 
 
 
