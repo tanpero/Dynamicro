@@ -47,7 +47,13 @@ int main(int argc, char* argv[])
 }
 ```
 
+在编译时，请确保编译器使用了 C++ 14。一切正常，我们会得到这样的输出：
 
+```
+result is 30
+```
+
+Have fun！
 
 
 
