@@ -17,8 +17,6 @@ int add(int a, int b);
 #endif // !_LIBRARY_H_
 ```
 
-
-
 在 `library.cpp` 中：
 
 ```c++
