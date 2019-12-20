@@ -1,38 +1,27 @@
-#ifndef _TFC_DYNAMICRO_H_
-#define _TFC_DYNAMICRO_H_
-
-/*
-* Copyright (c) Tanpero 2019
-* All rights reserved.
-*
-* Provide a set of useful methods to easily call
-* the interface in the dynamic link library.
-*
-* A subproject of Tanpero Foundation Classes (TFC).
-* Under GPL-v3 license.
-*/
+#ifndef _DYNAMICRO_H_
+#define _DYNAMICRO_H_
 
 #include <string>
 #include <map>
 #include <functional>
+#include <type_traits>
+#include <utility>
 
-#ifdef _WIN32
-#	include <Windows.h>
-#elif defined(UNIX)
-#	include <dlfcn.h>
+
+#if defined(__unix__)
+#include <dlfcn.h>
+#include <iostream>
+#elif defined(_WIN32)
+#include <Windows.h>
 #endif
 
-
-class Dynamicro
-{
+class Dynamicro {
 public:
 
-	Dynamicro() : m_hMod(nullptr)
-	{
+	Dynamicro() : m_hMod(nullptr) {
 	}
 
-	~Dynamicro()
-	{
+	~Dynamicro() {
 		unload();
 	}
 
@@ -64,7 +53,7 @@ public:
 #elif defined (__GNUC__) && defined(__unix__)
 		auto b = dlclose(m_hMod);
 #endif // WIN32
-		
+
 		if (!b)
 			return false;
 
@@ -72,53 +61,51 @@ public:
 		return true;
 	}
 
-	template <typename T>
-	inline std::function<T> get(const std::string& funcName)
-	{
-		std::map<std::string, moduleType>::iterator it = m_map.find(funcName);
-		if (it == m_map.end())
-		{
 
-#ifdef WIN32
-			auto addr = GetProcAddress(m_hMod, funcName.c_str());
-#elif defined (__GNUC__) && defined(__unix__)
-			auto addr = dlsym(m_hMod, funcName.data());
+	template<typename T>
+	std::function<T> get(const std::string &funcName) {
+		auto it = m_map.find(funcName);
+		if (it == m_map.end()) {
+
+#ifdef _WIN32
+			GetProcAddress(m_hMod, funcName.c_str());
+#elif __unix__
+			dlsym(m_hMod, funcName.data());
 #endif // WIN32
 
-			if (!addr)
+			if (!m_hMod)
 				return nullptr;
-			m_map.insert(std::make_pair(funcName, addr));
+			m_map[funcName] = m_hMod;
 			it = m_map.find(funcName);
 		}
 
-		return std::function<T>((T*)(it->second));
-	}
+		return std::function<T>((T *)(it->second));
+	};
 
-	template <typename T, typename... Args>
-	inline typename std::result_of<std::function<T>(Args...)>::type
-		exec(const std::string& funcName, Args&&... args)
-	{
+	template<typename T, typename... Args>
+	typename std::result_of<std::function<T>(Args...)>::type exec(const std::string &funcName, Args &&... args) {
 		auto f = get<T>(funcName);
-		if (f == nullptr)
-		{
-			std::string s = "can not find this function " + funcName;
-			throw std::exception(s.c_str());
+		if (f == nullptr) {
+			std::string s = "can not find this function :" + funcName;
+			std::cout << s << std::endl;
+			throw std::exception();
 		}
 
 		return f(std::forward<Args>(args)...);
-	}
+	};
 
 private:
 
-#ifdef WIN32
+#ifdef _WIN32
 	using moduleType = HMODULE;
-#elif defined (__GNUC__) && defined(__unix__)
-	using moduleType = void*;
+	using addressType = FARPROC;
+#elif __unix__
+	using moduleType = void *;
 #endif // WIN32
 
 	moduleType m_hMod;
 	std::map<std::string, moduleType> m_map;
 };
 
-#endif // !_TFC_DYNAMICRO_H_
+#endif // !_DYNAMICRO_H_
 
