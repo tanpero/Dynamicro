@@ -75,7 +75,7 @@ public:
 
 			if (!m_hMod)
 				return nullptr;
-			m_map[funcName] = m_hMod;
+			m_map.insert({ funcName, m_hMod });
 			it = m_map.find(funcName);
 		}
 
@@ -86,9 +86,7 @@ public:
 	typename std::result_of<std::function<T>(Args...)>::type exec(const std::string &funcName, Args &&... args) {
 		auto f = get<T>(funcName);
 		if (f == nullptr) {
-			std::string s = "can not find this function :" + funcName;
-			std::cout << s << std::endl;
-			throw std::exception();
+			throw std::exception(("can not find this function: " + funcName).c_str());
 		}
 
 		return f(std::forward<Args>(args)...);
